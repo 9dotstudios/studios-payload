@@ -70,15 +70,18 @@ When you're ready to deploy, first make sure you have created your migrations:
 pnpm payload migrate:create
 ```
 
-Then run the following command:
+Cloudflare Workers Builds runs `npm run build`, then `npm run deploy`.
+
+- `npm run build` runs the OpenNext Cloudflare build. That invokes `next build --webpack` (same as the [with-cloudflare-d1](https://github.com/payloadcms/payload/tree/main/templates/with-cloudflare-d1) template) and writes the Worker to `.open-next/`.
+- `npm run deploy` applies D1 migrations to the remote database, deploys `.open-next`, and ensures a `PAYLOAD_SECRET` Worker secret exists.
+
+`PAYLOAD_SECRET` is not stored in the repo. Generate one with `openssl rand -hex 32` and set it with `wrangler secret put PAYLOAD_SECRET`, or let `npm run deploy` create one when it is missing. After the first successful deploy, open `/admin` and create the first user.
+
+Local one-shot (build, migrate, deploy):
 
 ```bash
-pnpm run deploy
+pnpm run build && pnpm run deploy
 ```
-
-This will spin up Wrangler in `production` mode, run any created migrations, build the app and then deploy the bundle up to Cloudflare.
-
-That's it! You can if you wish move these steps into your CI pipeline as well.
 
 ## Enabling logs
 

@@ -2,6 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "main": ".open-next/worker.js",
   "name": "studios-payload",
+  "account_id": "94068cc076ded5a2933285c09a5f9d0d",
   "compatibility_date": "2025-08-15",
   "compatibility_flags": [
     // Enable Node.js API
@@ -11,6 +12,12 @@
     // see https://developers.cloudflare.com/workers/configuration/compatibility-flags/#global-fetch-strictly-public
     "global_fetch_strictly_public",
   ],
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": true,
+    },
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS",
@@ -33,7 +40,8 @@
   "r2_buckets": [
     {
       "binding": "R2",
-      "bucket_name": "studios-payload-media","preview_bucket_name": "studios-payload-media",
+      "bucket_name": "studios-payload-media",
+      "preview_bucket_name": "studios-payload-media",
     },
     // Create a R2 binding with the binding name "NEXT_INC_CACHE_R2_BUCKET"
     // {
