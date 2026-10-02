@@ -13,10 +13,44 @@ import { Media } from './collections/Media'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
-const realpath = (value: string) => (fs.existsSync(value) ? fs.realpathSync(value) : undefined)
+const realpath = (value: string) => {
+  try {
+    return fs.existsSync(value) ? fs.realpathSync(value) : undefined
+  } catch {
+    return undefined
+  }
+}
 
-const isCLI = process.argv.some((value) => realpath(value).endsWith(path.join('payload', 'bin.js')))
+const isCLI = process.argv.some((value) => {
+  const resolved = realpath(value)
+  if (!resolved) return false
+  return (
+    resolved.endsWith(path.join('payload', 'bin.js')) ||
+    resolved.endsWith(path.join('next', 'dist', 'bin', 'next'))
+  )
+})
 const isProduction = process.env.NODE_ENV === 'production'
+
+declare global {
+  interface CloudflareEnv {
+    PAYLOAD_SECRET?: string
+  }
+}
+
+// Bracket access so Next does not inline these at build time. OpenNext copies
+// Worker secrets and the request origin into process.env before the app loads.
+function readRuntimeOrigin(): string {
+  const origin = process.env['__NEXT_PRIVATE_ORIGIN']
+  return typeof origin === 'string' && origin.startsWith('http') ? origin : ''
+}
+
+function readPayloadSecret(env: CloudflareEnv): string {
+  if (typeof env.PAYLOAD_SECRET === 'string' && env.PAYLOAD_SECRET.length > 0) {
+    return env.PAYLOAD_SECRET
+  }
+  const fromProcess = process.env['PAYLOAD_SECRET']
+  return typeof fromProcess === 'string' ? fromProcess : ''
+}
 
 const createLog =
   (level: string, fn: typeof console.log) => (objOrMsg: object | string, msg?: string) => {
@@ -43,6 +77,19 @@ const cloudflare =
     ? await getCloudflareContextFromWrangler()
     : await getCloudflareContext({ async: true })
 
+const serverURL = readRuntimeOrigin()
+
+// Auth cookies default to Secure=false. Mark them Secure when this process is
+// serving the HTTPS Worker so the admin session matches that public URL.
+if (serverURL.startsWith('https://') && Users.auth === true) {
+  Users.auth = {
+    cookies: {
+      sameSite: 'Lax',
+      secure: true,
+    },
+  }
+}
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -52,7 +99,8 @@ export default buildConfig({
   },
   collections: [Users, Media],
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: readPayloadSecret(cloudflare.env),
+  serverURL,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },

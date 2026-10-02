@@ -77,6 +77,8 @@ Cloudflare Workers Builds runs `npm run build`, then `npm run deploy`.
 
 `PAYLOAD_SECRET` is not stored in the repo. Generate one with `openssl rand -hex 32` and set it with `wrangler secret put PAYLOAD_SECRET`, or let `npm run deploy` create one when it is missing. After the first successful deploy, open `/admin` and create the first user.
 
+Payload 3.90.0 hashes passwords with 600,000 PBKDF2 iterations. Cloudflare Workers rejects counts above 100,000, which makes `POST /api/users/first-register` return 500. `npm run build` patches the hasher so Workers uses 100,000 iterations and stores that count in the hash. Node.js still uses 600,000.
+
 Local one-shot (build, migrate, deploy):
 
 ```bash
