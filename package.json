@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "node ./scripts/patch-workers-pbkdf2.mjs && node ./scripts/verify-workers-pbkdf2.mjs && opennextjs-cloudflare build",
+    "build": "node ./scripts/patch-workers-pbkdf2.mjs && node ./scripts/verify-workers-pbkdf2.mjs && rm -rf .next && opennextjs-cloudflare build && node ./scripts/assert-workers-pbkdf2-bundle.mjs",
     "deploy": "npm run deploy:database && npm run deploy:app && npm run deploy:secret",
     "deploy:app": "opennextjs-cloudflare deploy -- --keep-vars",
     "deploy:database": "cross-env NODE_ENV=production PAYLOAD_SECRET=ignore payload migrate && wrangler d1 execute D1 --command 'PRAGMA optimize' --remote",
@@ -19,7 +19,7 @@
     "ii": "pnpm install --ignore-workspace",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
-    "preview": "node ./scripts/patch-workers-pbkdf2.mjs && node ./scripts/verify-workers-pbkdf2.mjs && opennextjs-cloudflare build && opennextjs-cloudflare preview --env=$CLOUDFLARE_ENV",
+    "preview": "node ./scripts/patch-workers-pbkdf2.mjs && node ./scripts/verify-workers-pbkdf2.mjs && rm -rf .next && opennextjs-cloudflare build && node ./scripts/assert-workers-pbkdf2-bundle.mjs && opennextjs-cloudflare preview --env=$CLOUDFLARE_ENV",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test": "pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
